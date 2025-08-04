@@ -12,9 +12,27 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useState } from "react"
+import WalletConnect from "./ConnectWallet"
 
 export function Topbar({ onMenuToggle, isMobileMenuOpen }) {
-  const [walletConnected] = useState(false)
+  const [walletConnected, setWalletConnected] = useState(false);
+  const [walletAddress, setWalletAddress] = useState('');
+
+  const connectWallet = async () => {
+    if (window.ethereum) {
+      try {
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        setWalletAddress(accounts[0]);
+        setWalletConnected(true);
+        console.log('Wallet Address:', accounts[0]);
+      } catch (error) {
+        console.error('Connection Error:', error);
+      }
+    } else {
+      alert('Please install MetaMask!');
+    }
+  };
+
   const [notifications] = useState(3)
 
   return (
@@ -34,10 +52,10 @@ export function Topbar({ onMenuToggle, isMobileMenuOpen }) {
 
           {/* Logo */}
           <div className="flex items-center gap-2">
-           <div className="inline-flex items-center justify-center w-10 h-10 bg-white/20 backdrop-blur-glass rounded-2xl shadow-lg">
-            <span className="text-2xl font-bold text-white">W</span>
-          </div>
-            
+            <div className="inline-flex items-center justify-center w-10 h-10 bg-white/20 backdrop-blur-glass rounded-2xl shadow-lg">
+              <span className="text-2xl font-bold text-white">W</span>
+            </div>
+
             <span className="font-bold text-lg text-white bg-clip-text text-transparent hidden sm:block">
               WorkChain
             </span>
@@ -71,14 +89,22 @@ export function Topbar({ onMenuToggle, isMobileMenuOpen }) {
           </Button>
 
           {/* Wallet Status */}
-          <Button 
-            variant={walletConnected ? "ghost" : "outline"} 
+          <Button
+            variant={walletConnected ? "ghost" : "outline"}
             size="sm"
             className="bg-gray-200 hidden sm:flex"
+            onClick={connectWallet}
           >
             <Wallet className="h-4 w-4 mr-2" />
             {walletConnected ? "Connected" : "Connect"}
           </Button>
+
+          {/* Optionally show the connected address */}
+          {walletConnected && (
+            <p className="mt-2 text-sm text-gray-700">
+              Connected Wallet: {walletAddress}
+            </p>
+          )}
 
           {/* Profile Dropdown */}
           <DropdownMenu>
