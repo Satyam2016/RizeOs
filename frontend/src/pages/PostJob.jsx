@@ -20,12 +20,56 @@ export default function PostJob() {
   const [jobData, setJobData] = useState({
     title: "",
     description: "",
-    skills: [] ,
+    skills: [],
     budget: "",
     location: "",
     type: "",
     currency: "SOL"
   })
+
+
+  const handlePostJob = async () => {
+    const payload = {
+      title: jobData.title,
+      description: jobData.description,
+      skills: jobData.skills,
+      budget: jobData.budget,
+      location: jobData.location,
+      type: jobData.type,
+      currency: jobData.currency,
+
+    }
+    const token = localStorage.getItem("token")
+    const formBody = new URLSearchParams()
+    try {
+      formBody.append("title", jobData.title)
+      formBody.append("description", jobData.description)
+      formBody.append("budget", jobData.budget)
+      formBody.append("location", jobData.location)
+      formBody.append("type", jobData.type)
+      formBody.append("currency", jobData.currency)
+
+      // For skills (array), join into comma-separated string
+      formBody.append("skills", jobData.skills.join(","))
+
+      const res = await fetch("http://localhost:3000/api/jobs", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          Authorization: `Bearer ${token}`
+        },
+        body: formBody.toString()
+      })
+      if (res.ok) {
+        setCurrentStep(3);
+      } else {
+        console.error("Job posting failed:", data.error);
+      }
+    } catch (err) {
+      console.error("Error:", err.message);
+    }
+  };
+
 
   const steps = [
     { number: 1, title: "Job Details", description: "Basic information about the position" },
@@ -38,7 +82,7 @@ export default function PostJob() {
     "JavaScript", "Rust", "Smart Contracts", "DeFi", "UI/UX Design"
   ]
 
-  const handleSkillToggle = (skill ) => {
+  const handleSkillToggle = (skill) => {
     setJobData(prev => ({
       ...prev,
       skills: prev.skills.includes(skill)
@@ -67,7 +111,7 @@ export default function PostJob() {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Header */}
-      <div className="text-center">
+      <div className="text-center ">
         <h1 className="text-3xl font-bold text-foreground mb-2">Post a Job</h1>
         <p className="text-muted-foreground">Find the perfect candidate for your team</p>
       </div>
@@ -77,13 +121,12 @@ export default function PostJob() {
         {steps.map((step, index) => (
           <div key={step.number} className="flex items-center">
             <div className="flex flex-col items-center">
-              <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${
-                currentStep >= step.number
-                  ? "bg-primary border-primary text-white"
-                  : "border-border text-muted-foreground"
-              }`}>
+              <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${currentStep >= step.number
+                  ? "bg-green-700 border-green text-green"
+                  : "bg-white-100 text-muted-foreground"
+                }`}>
                 {currentStep > step.number ? (
-                  <Check className="h-5 w-5" />
+                  <Check className="bg-green-700 h-5 w-5" />
                 ) : (
                   step.number
                 )}
@@ -94,9 +137,8 @@ export default function PostJob() {
               </div>
             </div>
             {index < steps.length - 1 && (
-              <div className={`w-16 h-0.5 mx-4 ${
-                currentStep > step.number ? "bg-primary" : "bg-border"
-              }`} />
+              <div className={`w-16 h-0.5 mx-4 ${currentStep > step.number ? "bg-green-700" : "bg-white"
+                }`} />
             )}
           </div>
         ))}
@@ -118,12 +160,12 @@ export default function PostJob() {
                     id="title"
                     placeholder="e.g. Senior Frontend Developer"
                     value={jobData.title}
-                    onChange={(e) => setJobData({...jobData, title: e.target.value})}
+                    onChange={(e) => setJobData({ ...jobData, title: e.target.value })}
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="type">Job Type *</Label>
-                  <Select value={jobData.type} onValueChange={(value) => setJobData({...jobData, type: value})}>
+                  <Select value={jobData.type} onValueChange={(value) => setJobData({ ...jobData, type: value })}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select job type" />
                     </SelectTrigger>
@@ -143,7 +185,7 @@ export default function PostJob() {
                   id="description"
                   placeholder="Describe the role, responsibilities, and requirements..."
                   value={jobData.description}
-                  onChange={(e) => setJobData({...jobData, description: e.target.value})}
+                  onChange={(e) => setJobData({ ...jobData, description: e.target.value })}
                   rows={6}
                 />
               </div>
@@ -157,7 +199,7 @@ export default function PostJob() {
                       id="budget"
                       placeholder="e.g. 80k - 120k or $50/hour"
                       value={jobData.budget}
-                      onChange={(e) => setJobData({...jobData, budget: e.target.value})}
+                      onChange={(e) => setJobData({ ...jobData, budget: e.target.value })}
                       className="pl-10"
                     />
                   </div>
@@ -170,7 +212,7 @@ export default function PostJob() {
                       id="location"
                       placeholder="e.g. San Francisco, CA or Remote"
                       value={jobData.location}
-                      onChange={(e) => setJobData({...jobData, location: e.target.value})}
+                      onChange={(e) => setJobData({ ...jobData, location: e.target.value })}
                       className="pl-10"
                     />
                   </div>
@@ -243,7 +285,7 @@ export default function PostJob() {
                   <div className="space-y-4">
                     <div className="space-y-2">
                       <Label>Select Currency</Label>
-                      <Select value={jobData.currency} onValueChange={(value) => setJobData({...jobData, currency: value})}>
+                      <Select value={jobData.currency} onValueChange={(value) => setJobData({ ...jobData, currency: value })}>
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
@@ -271,9 +313,10 @@ export default function PostJob() {
                       </div>
                     </Card>
 
-                    <Button variant="gradient" className="w-full" size="lg">
-                      Pay Now
+                    <Button variant="gradient" className="w-full" size="lg" onClick={handlePostJob}>
+                      Pay & Post Job
                     </Button>
+
                   </div>
                 </div>
               )}
@@ -337,15 +380,15 @@ export default function PostJob() {
 
           {/* Navigation Buttons */}
           <div className="flex justify-between pt-6 border-t border-border">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={handleBack}
               disabled={currentStep === 1}
             >
               Back
             </Button>
-            <Button 
-              variant="gradient" 
+            <Button
+              variant="gradient"
               onClick={handleNext}
               disabled={
                 currentStep === 1 && (!jobData.title || !jobData.description || !jobData.budget || !jobData.location) ||

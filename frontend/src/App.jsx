@@ -1,45 +1,28 @@
-
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { Layout } from "@/components/layout/Layout";
+import ProtectedRoute from "./ProtectedRoute";
+import { Layout } from "./components/layout/Layout";
+
+import Auth from "./pages/Auth";
 import Feed from "./pages/Feed";
 import Jobs from "./pages/Jobs";
-import Profile from "./pages/Profile";
-import Auth from "./pages/Auth";
-import PostJob from "./pages/PostJob";
-import Payments from "./pages/Payments";
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
-
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
+  <BrowserRouter>
+    <Routes>
+      {/* Public Route */}
+      <Route path="/auth" element={<Auth />} />
 
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          {/* Authentication Route */}
-          <Route path="/auth" element={<Auth />} />
-          
-          {/* Main App Routes with Layout */}
-          <Route path="/" element={<Layout><Feed /></Layout>} />
-          <Route path="/jobs" element={<Layout><Jobs /></Layout>} />
-          <Route path="/post-job" element={<Layout><PostJob /></Layout>} />
-          <Route path="/profile" element={<Layout><Profile /></Layout>} />
-          <Route path="/payments" element={<Layout><Payments /></Layout>} />
-          <Route path="/create-post" element={<Layout><Feed /></Layout>} />
-          <Route path="/my-jobs" element={<Layout><Jobs /></Layout>} />
-          <Route path="/settings" element={<Layout><Profile /></Layout>} />
-          
-          {/* 404 Route */}
+      {/* All Protected Routes under this */}
+      <Route element={<ProtectedRoute />}>
+        <Route element={<Layout />}>
+          <Route path="/" element={<Feed />} />
+          <Route path="/jobs" element={<Jobs />} />
           <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+        </Route>
+      </Route>
+    </Routes>
+  </BrowserRouter>
 );
 
 export default App;

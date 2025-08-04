@@ -5,6 +5,6 @@ const postController = require("../controllers/postController");
 const router = express.Router();
 
 router.post("/", verifyToken, postController.createFeedPost);
-router.get("/", postController.getFeedPosts);
+router.get("/", verifyToken, postController.getFeedPosts);
 
 module.exports = router;

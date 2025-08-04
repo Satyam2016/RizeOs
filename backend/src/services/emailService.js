@@ -1,7 +1,7 @@
 const nodemailer = require("nodemailer");
 
 const transporter = nodemailer.createTransport({
-  service: "gmail", // or another provider like "SendGrid"
+  service: "gmail", 
   auth: {
     user: "satyam.kumarr279@gmail.com",
     pass: "ajyhfhjqeghsbbnl"
@@ -10,7 +10,7 @@ const transporter = nodemailer.createTransport({
 
 module.exports = async ({ to, subject, html }) => {
   await transporter.sendMail({
-    from: `"SkillSync" <${process.env.EMAIL_USER}>`,
+    from: `"WorkChain" <${process.env.EMAIL_USER}>`,
     to,
     subject,
     html

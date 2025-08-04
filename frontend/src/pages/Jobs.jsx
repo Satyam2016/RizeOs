@@ -19,82 +19,107 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
+import { useEffect } from 'react'
+import axios from 'axios'
 
 // Removed the Job interface and type annotations
 
-const sampleJobs = [
-  {
-    id: "1",
-    title: "Senior Frontend Developer",
-    company: "TechFlow Inc.",
-    companyLogo: "/placeholder-avatar.jpg",
-    location: "San Francisco, CA",
-    type: "Full-time",
-    salary: "$120k - $180k",
-    postedTime: "2 hours ago",
-    description: "We're looking for a Senior Frontend Developer to join our team and help build the next generation of our platform using React, TypeScript, and modern web technologies.",
-    skills: ["React", "TypeScript", "Next.js", "Tailwind CSS"],
-    applicants: 12,
-    verified: true
-  },
-  {
-    id: "2",
-    title: "Blockchain Developer",
-    company: "CryptoStart",
-    companyLogo: "/placeholder-avatar.jpg",
-    location: "Remote",
-    type: "Contract",
-    salary: "$80 - $120/hr",
-    postedTime: "5 hours ago",
-    description: "Join our team to build cutting-edge DeFi applications on Ethereum and Solana. Experience with smart contracts required.",
-    skills: ["Solidity", "Rust", "Web3.js", "Smart Contracts"],
-    applicants: 8,
-    verified: true
-  },
-  {
-    id: "3",
-    title: "UI/UX Designer",
-    company: "DesignLab",
-    companyLogo: "/placeholder-avatar.jpg",
-    location: "New York, NY",
-    type: "Full-time",
-    salary: "$90k - $130k",
-    postedTime: "1 day ago",
-    description: "We're seeking a creative UI/UX Designer to help design beautiful and intuitive user experiences for our Web3 applications.",
-    skills: ["Figma", "Adobe Creative Suite", "Prototyping", "User Research"],
-    applicants: 24,
-  },
-  {
-    id: "4",
-    title: "Full Stack Engineer",
-    company: "StartupXYZ",
-    companyLogo: "/placeholder-avatar.jpg",
-    location: "Austin, TX",
-    type: "Full-time",
-    salary: "$100k - $150k",
-    postedTime: "2 days ago",
-    description: "Looking for a versatile Full Stack Engineer to work on both frontend and backend systems. Experience with React and Node.js preferred.",
-    skills: ["React", "Node.js", "PostgreSQL", "AWS"],
-    applicants: 18,
-  }
-]
+// const sampleJobs = [
+//   {
+//     id: "1",
+//     title: "Senior Frontend Developer",
+//     company: "TechFlow Inc.",
+//     companyLogo: "/placeholder-avatar.jpg",
+//     location: "San Francisco, CA",
+//     type: "Full-time",
+//     salary: "$120k - $180k",
+//     postedTime: "2 hours ago",
+//     description: "We're looking for a Senior Frontend Developer to join our team and help build the next generation of our platform using React, TypeScript, and modern web technologies.",
+//     skills: ["React", "TypeScript", "Next.js", "Tailwind CSS"],
+//     applicants: 12,
+//     verified: true
+//   },
+//   {
+//     id: "2",
+//     title: "Blockchain Developer",
+//     company: "CryptoStart",
+//     companyLogo: "/placeholder-avatar.jpg",
+//     location: "Remote",
+//     type: "Contract",
+//     salary: "$80 - $120/hr",
+//     postedTime: "5 hours ago",
+//     description: "Join our team to build cutting-edge DeFi applications on Ethereum and Solana. Experience with smart contracts required.",
+//     skills: ["Solidity", "Rust", "Web3.js", "Smart Contracts"],
+//     applicants: 8,
+//     verified: true
+//   },
+//   {
+//     id: "3",
+//     title: "UI/UX Designer",
+//     company: "DesignLab",
+//     companyLogo: "/placeholder-avatar.jpg",
+//     location: "New York, NY",
+//     type: "Full-time",
+//     salary: "$90k - $130k",
+//     postedTime: "1 day ago",
+//     description: "We're seeking a creative UI/UX Designer to help design beautiful and intuitive user experiences for our Web3 applications.",
+//     skills: ["Figma", "Adobe Creative Suite", "Prototyping", "User Research"],
+//     applicants: 24,
+//   },
+//   {
+//     id: "4",
+//     title: "Full Stack Engineer",
+//     company: "StartupXYZ",
+//     companyLogo: "/placeholder-avatar.jpg",
+//     location: "Austin, TX",
+//     type: "Full-time",
+//     salary: "$100k - $150k",
+//     postedTime: "2 days ago",
+//     description: "Looking for a versatile Full Stack Engineer to work on both frontend and backend systems. Experience with React and Node.js preferred.",
+//     skills: ["React", "Node.js", "PostgreSQL", "AWS"],
+//     applicants: 18,
+//   }
+// ]
 
 export default function Jobs() {
-  const [jobs] = useState(sampleJobs)
+  const [jobs, setJobs] = useState([])
   const [searchTerm, setSearchTerm] = useState("")
   const [locationFilter, setLocationFilter] = useState("")
   const [typeFilter, setTypeFilter] = useState("")
 
   const filteredJobs = jobs.filter(job => {
     const matchesSearch = job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         job.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         job.skills.some(skill => skill.toLowerCase().includes(searchTerm.toLowerCase()))
-    
+      job.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      job.skills.some(skill => skill.toLowerCase().includes(searchTerm.toLowerCase()))
+
     const matchesLocation = locationFilter === "all" || !locationFilter || job.location.toLowerCase().includes(locationFilter.toLowerCase())
     const matchesType = typeFilter === "all" || !typeFilter || job.type === typeFilter
-    
+
     return matchesSearch && matchesLocation && matchesType
   })
+
+  useEffect(() => {
+    const fetchJobs = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      try {
+        const res = await axios.get("http://localhost:3000/api/jobs", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        setJobs(res.data);
+      } catch (err) {
+        setPosts([]);
+      }
+    };
+
+    fetchJobs();
+  }, [])
+
+
 
   return (
     <div className="space-y-6">
@@ -103,7 +128,7 @@ export default function Jobs() {
         <div className="max-w-4xl mx-auto">
           <h1 className="text-3xl font-bold mb-2">Find Your Dream Job</h1>
           <p className="text-white/80 mb-6">Discover opportunities in Web3, blockchain, and traditional tech</p>
-          
+
           {/* Search Bar */}
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1 relative">
@@ -128,7 +153,7 @@ export default function Jobs() {
                   <SelectItem value="austin">Austin</SelectItem>
                 </SelectContent>
               </Select>
-              
+
               <Select value={typeFilter} onValueChange={setTypeFilter}>
                 <SelectTrigger className="w-40 bg-white/20 border-white/30 text-white">
                   <SelectValue placeholder="Job Type" />
@@ -207,22 +232,22 @@ export default function Jobs() {
         {/* Job Cards */}
         <div className="space-y-4">
           {filteredJobs.map((job) => (
-            <Card key={job.id} className="bg-gray-200 shadow-soft border-border/50 hover:shadow-medium transition-all duration-200">
+            <Card key={job._id} className="bg-gray-200 shadow-soft border-border/50 hover:shadow-medium transition-all duration-200">
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div className="flex items-start space-x-4">
                     <Avatar className="h-12 w-12">
                       <AvatarImage src={job.companyLogo} />
                       <AvatarFallback className="bg-[#398dd3] text-white">
-                        {job.company.split(' ').map(word => word[0]).join('')}
+                        {job?.author?.profile.name.split(' ').map(word => word[0]).join('')}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
                       <div className="flex items-center space-x-2 mb-1">
                         <h3 className="font-semibold text-lg">{job.title}</h3>
-                        {job.verified && <Badge variant="success" className="text-xs">Verified</Badge>}
+                        {job.author?.profile.isVerified && <Badge variant="success" className="text-xs">Verified</Badge>}
                       </div>
-                      <p className="text-sm text-muted-foreground">{job.company}</p>
+                      <p className="text-sm text-muted-foreground">{job.author.profile.name}</p>
                     </div>
                   </div>
                   <Badge variant="outline" className="self-start">
@@ -234,7 +259,7 @@ export default function Jobs() {
                 <p className="mb-2 text-muted-foreground">{job.description}</p>
                 <div className="flex flex-wrap gap-2 mb-3">
                   {job.skills.map((skill, i) => (
-                    <Badge key={i} variant="outline">{skill}</Badge>
+                    <Badge key={i} variant="outline">{skill}  </Badge>
                   ))}
                 </div>
                 <div className="flex items-center text-sm text-muted-foreground space-x-4">
@@ -244,11 +269,11 @@ export default function Jobs() {
                   </div>
                   <div className="flex items-center space-x-1">
                     <DollarSign className="h-4 w-4" />
-                    <span>{job.salary}</span>
+                    <span>{job.budget}</span>
                   </div>
                   <div className="flex items-center space-x-1">
                     <Clock className="h-4 w-4" />
-                    <span>{job.postedTime}</span>
+                    <span>{new Date(job.createdAt).toLocaleDateString("en-US", { day: "2-digit", month: "long", year: "numeric", })}</span>
                   </div>
                   <div className="flex items-center space-x-1">
                     <Bookmark className="h-4 w-4" />
