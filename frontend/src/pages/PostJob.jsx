@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { DollarSign, MapPin, Clock, Wallet, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -16,7 +16,6 @@ import {
 
 export default function PostJob() {
   const [currentStep, setCurrentStep] = useState(1)
-  const [walletConnected, setWalletConnected] = useState(false)
   const [jobData, setJobData] = useState({
     title: "",
     description: "",
@@ -103,10 +102,68 @@ export default function PostJob() {
     }
   }
 
-  const connectWallet = () => {
-    // Simulate wallet connection
-    setWalletConnected(true)
-  }
+  const [walletConnected, setWalletConnected] = useState(false);
+  const [walletAddress, setWalletAddress] = useState('');
+  const [walletBalance, setWalletBalance] = useState('');
+
+  useEffect(() => {
+    if (currentStep === 2) {
+      checkWalletConnection();
+    }
+  }, [currentStep]);
+
+  const checkWalletConnection = async () => {
+    if (window.ethereum) {
+      try {
+        const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+        if (accounts.length > 0) {
+          setWalletAddress(accounts[0]);
+          setWalletConnected(true);
+          fetchBalance(accounts[0]);
+        } else {
+          setWalletConnected(false);
+          setWalletAddress('');
+          setWalletBalance('');
+        }
+      } catch (error) {
+        console.error('Error checking wallet connection', error);
+      }
+    }
+  };
+
+  const fetchBalance = async (address) => {
+    if (!window.ethereum) return;
+
+    if (jobData.currency === 'ETH' || jobData.currency === 'MATIC') {
+      try {
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        const balanceBigNumber = await provider.getBalance(address);
+        const balanceInEth = ethers.utils.formatEther(balanceBigNumber);
+        setWalletBalance(parseFloat(balanceInEth).toFixed(4));
+      } catch (error) {
+        console.error('Error fetching balance', error);
+        setWalletBalance('');
+      }
+    } else if (jobData.currency === 'SOL') {
+      setWalletBalance('0'); // SOL balance fetch requires another approach
+    }
+  };
+
+  const connectWallet = async () => {
+    if (window.ethereum) {
+      try {
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        setWalletAddress(accounts[0]);
+        setWalletConnected(true);
+        fetchBalance(accounts[0]);
+        console.log('Wallet Address:', accounts[0]);
+      } catch (error) {
+        console.error('Connection Error:', error);
+      }
+    } else {
+      alert('Please install MetaMask!');
+    }
+  };
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -124,6 +181,7 @@ export default function PostJob() {
               <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${currentStep >= step.number
                   ? "bg-green-700 border-green text-green"
                   : "bg-white-100 text-muted-foreground"
+
                 }`}>
                 {currentStep > step.number ? (
                   <Check className="bg-green-700 h-5 w-5" />
@@ -138,6 +196,7 @@ export default function PostJob() {
             </div>
             {index < steps.length - 1 && (
               <div className={`w-16 h-0.5 mx-4 ${currentStep > step.number ? "bg-green-700" : "bg-white"
+
                 }`} />
             )}
           </div>
@@ -278,7 +337,10 @@ export default function PostJob() {
                       <span className="text-green-800 font-medium">Wallet Connected</span>
                     </div>
                     <p className="text-green-700 text-sm mt-1">
-                      Address: 0x1234...abcd
+                      Address: {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
+                    </p>
+                    <p className="text-green-700 text-sm mt-1">
+                      Balance: {walletBalance} {jobData.currency}
                     </p>
                   </div>
 
@@ -286,6 +348,7 @@ export default function PostJob() {
                     <div className="space-y-2">
                       <Label>Select Currency</Label>
                       <Select value={jobData.currency} onValueChange={(value) => setJobData({ ...jobData, currency: value })}>
+
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
