@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { DollarSign, MapPin, Clock, Wallet, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -16,11 +16,10 @@ import {
 
 export default function PostJob() {
   const [currentStep, setCurrentStep] = useState(1)
-  const [walletConnected, setWalletConnected] = useState(false)
   const [jobData, setJobData] = useState({
     title: "",
     description: "",
-    skills: [] ,
+    skills: [],
     budget: "",
     location: "",
     type: "",
@@ -38,7 +37,7 @@ export default function PostJob() {
     "JavaScript", "Rust", "Smart Contracts", "DeFi", "UI/UX Design"
   ]
 
-  const handleSkillToggle = (skill ) => {
+  const handleSkillToggle = (skill) => {
     setJobData(prev => ({
       ...prev,
       skills: prev.skills.includes(skill)
@@ -59,10 +58,68 @@ export default function PostJob() {
     }
   }
 
-  const connectWallet = () => {
-    // Simulate wallet connection
-    setWalletConnected(true)
-  }
+  const [walletConnected, setWalletConnected] = useState(false);
+  const [walletAddress, setWalletAddress] = useState('');
+  const [walletBalance, setWalletBalance] = useState('');
+
+  useEffect(() => {
+    if (currentStep === 2) {
+      checkWalletConnection();
+    }
+  }, [currentStep]);
+
+  const checkWalletConnection = async () => {
+    if (window.ethereum) {
+      try {
+        const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+        if (accounts.length > 0) {
+          setWalletAddress(accounts[0]);
+          setWalletConnected(true);
+          fetchBalance(accounts[0]);
+        } else {
+          setWalletConnected(false);
+          setWalletAddress('');
+          setWalletBalance('');
+        }
+      } catch (error) {
+        console.error('Error checking wallet connection', error);
+      }
+    }
+  };
+
+  const fetchBalance = async (address) => {
+    if (!window.ethereum) return;
+
+    if (jobData.currency === 'ETH' || jobData.currency === 'MATIC') {
+      try {
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        const balanceBigNumber = await provider.getBalance(address);
+        const balanceInEth = ethers.utils.formatEther(balanceBigNumber);
+        setWalletBalance(parseFloat(balanceInEth).toFixed(4));
+      } catch (error) {
+        console.error('Error fetching balance', error);
+        setWalletBalance('');
+      }
+    } else if (jobData.currency === 'SOL') {
+      setWalletBalance('0'); // SOL balance fetch requires another approach
+    }
+  };
+
+  const connectWallet = async () => {
+    if (window.ethereum) {
+      try {
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        setWalletAddress(accounts[0]);
+        setWalletConnected(true);
+        fetchBalance(accounts[0]);
+        console.log('Wallet Address:', accounts[0]);
+      } catch (error) {
+        console.error('Connection Error:', error);
+      }
+    } else {
+      alert('Please install MetaMask!');
+    }
+  };
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -77,11 +134,10 @@ export default function PostJob() {
         {steps.map((step, index) => (
           <div key={step.number} className="flex items-center">
             <div className="flex flex-col items-center">
-              <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${
-                currentStep >= step.number
+              <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${currentStep >= step.number
                   ? "bg-primary border-primary text-white"
                   : "border-border text-muted-foreground"
-              }`}>
+                }`}>
                 {currentStep > step.number ? (
                   <Check className="h-5 w-5" />
                 ) : (
@@ -94,9 +150,8 @@ export default function PostJob() {
               </div>
             </div>
             {index < steps.length - 1 && (
-              <div className={`w-16 h-0.5 mx-4 ${
-                currentStep > step.number ? "bg-primary" : "bg-border"
-              }`} />
+              <div className={`w-16 h-0.5 mx-4 ${currentStep > step.number ? "bg-primary" : "bg-border"
+                }`} />
             )}
           </div>
         ))}
@@ -118,12 +173,12 @@ export default function PostJob() {
                     id="title"
                     placeholder="e.g. Senior Frontend Developer"
                     value={jobData.title}
-                    onChange={(e) => setJobData({...jobData, title: e.target.value})}
+                    onChange={(e) => setJobData({ ...jobData, title: e.target.value })}
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="type">Job Type *</Label>
-                  <Select value={jobData.type} onValueChange={(value) => setJobData({...jobData, type: value})}>
+                  <Select value={jobData.type} onValueChange={(value) => setJobData({ ...jobData, type: value })}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select job type" />
                     </SelectTrigger>
@@ -143,7 +198,7 @@ export default function PostJob() {
                   id="description"
                   placeholder="Describe the role, responsibilities, and requirements..."
                   value={jobData.description}
-                  onChange={(e) => setJobData({...jobData, description: e.target.value})}
+                  onChange={(e) => setJobData({ ...jobData, description: e.target.value })}
                   rows={6}
                 />
               </div>
@@ -157,7 +212,7 @@ export default function PostJob() {
                       id="budget"
                       placeholder="e.g. 80k - 120k or $50/hour"
                       value={jobData.budget}
-                      onChange={(e) => setJobData({...jobData, budget: e.target.value})}
+                      onChange={(e) => setJobData({ ...jobData, budget: e.target.value })}
                       className="pl-10"
                     />
                   </div>
@@ -170,7 +225,7 @@ export default function PostJob() {
                       id="location"
                       placeholder="e.g. San Francisco, CA or Remote"
                       value={jobData.location}
-                      onChange={(e) => setJobData({...jobData, location: e.target.value})}
+                      onChange={(e) => setJobData({ ...jobData, location: e.target.value })}
                       className="pl-10"
                     />
                   </div>
@@ -236,14 +291,23 @@ export default function PostJob() {
                       <span className="text-green-800 font-medium">Wallet Connected</span>
                     </div>
                     <p className="text-green-700 text-sm mt-1">
-                      Address: 0x1234...abcd
+                      Address: {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
+                    </p>
+                    <p className="text-green-700 text-sm mt-1">
+                      Balance: {walletBalance} {jobData.currency}
                     </p>
                   </div>
 
                   <div className="space-y-4">
                     <div className="space-y-2">
                       <Label>Select Currency</Label>
-                      <Select value={jobData.currency} onValueChange={(value) => setJobData({...jobData, currency: value})}>
+                      <Select
+                        value={jobData.currency}
+                        onValueChange={(value) => {
+                          setJobData({ ...jobData, currency: value });
+                          fetchBalance(walletAddress);
+                        }}
+                      >
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
@@ -337,15 +401,15 @@ export default function PostJob() {
 
           {/* Navigation Buttons */}
           <div className="flex justify-between pt-6 border-t border-border">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={handleBack}
               disabled={currentStep === 1}
             >
               Back
             </Button>
-            <Button 
-              variant="gradient" 
+            <Button
+              variant="gradient"
               onClick={handleNext}
               disabled={
                 currentStep === 1 && (!jobData.title || !jobData.description || !jobData.budget || !jobData.location) ||
